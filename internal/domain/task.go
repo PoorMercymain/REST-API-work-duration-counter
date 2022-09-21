@@ -17,8 +17,8 @@ type TaskRepository interface {
 	Delete(ctx context.Context, id Id) error
 }
 
+// TaskService тут бизнес-логика
 type TaskService interface {
-	//тут бизнес-логика
 	Create(ctx context.Context, task Task) (Id, error)
 	Update(ctx context.Context, id Id, task Task) error
 	Delete(ctx context.Context, id Id) error

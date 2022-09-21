@@ -5,8 +5,11 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"server/pkg/server"
 	"syscall"
+
+	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/server"
+
+	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/repository"
 )
 
 func main() {
@@ -17,6 +20,8 @@ func main() {
 	go func() {
 		err = theServer.Run()
 	}()
+
+	_ = repository.New()
 
 	fmt.Println("Server started")
 

@@ -3,42 +3,41 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v4"
 )
 
-type dsnBuilder struct {
-	hostname     string
-	databaseName string
-	username     string
-	password     string
+type db struct {
+	conn *pgx.Conn
 }
 
-func New() *dsnBuilder {
-	dsn := new(dsnBuilder)
+func New() *db {
+	db := new(db)
 
-	dsn = &dsnBuilder{
-		hostname:     "пока что тут ничего...",
-		databaseName: "пока что тут ничего...",
-		username:     "пока что тут ничего...",
-		password:     "пока что тут ничего...",
-	}
+	var (
+		hostname     = os.Getenv("REST_API_HOSTNAME")
+		databaseName = os.Getenv("REST_API_DATABASE_NAME")
+		username     = os.Getenv("REST_API_USERNAME")
+		password     = os.Getenv("REST_API_PASSWORD")
+		port         = os.Getenv("REST_API_PORT")
+	)
 
-	return dsn
-}
+	dsn := db.getDsnString(hostname, databaseName, username, password, port)
 
-func (dsn *dsnBuilder) getDsnString() string {
-	return fmt.Sprintf("host=%s;dbname=%s;user=%s;password=%s", dsn.hostname, dsn.databaseName, dsn.username, dsn.password)
-}
+	log.Println(hostname, databaseName, username, password)
 
-func NewPg() *pgx.Conn {
-	dsn := New()
-	conn, err := pgx.Connect(context.Background(), os.Getenv(dsn.getDsnString()))
+	conn, err := pgx.Connect(context.Background(), dsn)
 
 	if err != nil {
-		fmt.Println("Error occured while connecting to database -", err.Error())
+		log.Fatalf("Error occured while connecting to database - %v", err)
 	}
 
-	return conn
+	db.conn = conn
+	return db
+}
+
+func (d *db) getDsnString(hostname, databaseName, username, password, port string) string {
+	return fmt.Sprintf("host=%s dbname=%s user=%s password=%s port=%s sslmode=disable ", hostname, databaseName, username, password, port)
 }
