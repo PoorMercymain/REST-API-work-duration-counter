@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
+	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/service"
 )
 
 type workOperation struct {
@@ -14,23 +15,20 @@ type workOperation struct {
 func (w *workOperation) Create(ctx context.Context, work domain.Work) (domain.Id, error) {
 
 	var id domain.Id
-	var taskId domain.Id
-	var duration int
-	var resource int
 
 	result, err := w.db.conn.Query(ctx, fmt.Sprintf("INSERT INTO works VALUES($1, $2, $3, $4) RETURNING id, work.Id, work.TaskId, work.Duration, work.Resource"))
 
 	if err != nil {
-		fmt.Println("Error occured while inserting a row into database -", err.Error())
+		service.RedirectErrors(err)
 		return 0, err
 	}
 
 	defer result.Close()
 
-	err = result.Scan(&id, &taskId, &duration, &resource)
+	err = result.Scan(&id)
 
 	if err != nil {
-		fmt.Println("Error occured while inserting a row into database -", err.Error())
+		service.RedirectErrors(err)
 		return 0, err
 	}
 
@@ -41,7 +39,7 @@ func (w *workOperation) Delete(ctx context.Context, id domain.Id) error {
 	_, err := w.db.conn.Query(ctx, fmt.Sprintf("DELETE FROM works WHERE id=$1, id"))
 
 	if err != nil {
-		fmt.Println("Error occured while deleting a row from database -", err.Error())
+		service.RedirectErrors(err)
 		return err
 	}
 
@@ -54,7 +52,7 @@ func (w *workOperation) List(ctx context.Context, id domain.Id) (domain.WorkResp
 	var response domain.WorkResponse
 
 	if err != nil {
-		fmt.Println("Error occured while trying to find a row with id =", id, "-", err.Error())
+		service.RedirectErrors(err)
 		return response, err
 	}
 
@@ -68,7 +66,7 @@ func (w *workOperation) List(ctx context.Context, id domain.Id) (domain.WorkResp
 		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource)
 
 		if err != nil {
-			fmt.Println("Error occured while trying to show works rows -", err.Error())
+			service.RedirectErrors(err)
 			return response, err
 		}
 
