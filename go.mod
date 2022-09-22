@@ -2,10 +2,6 @@ module github.com/PoorMercymain/REST-API-work-duration-counter
 
 go 1.19
 
-replace (
-	server latest => github.com/PoorMercymain/REST-API-work-duration-counter latest
-)
-
 require github.com/jackc/pgx/v4 v4.17.2
 
 require (
