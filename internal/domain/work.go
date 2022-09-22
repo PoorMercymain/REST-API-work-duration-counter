@@ -6,7 +6,7 @@ type Work struct {
 	Id       Id  `json:"id"`
 	TaskId   Id  `json:"task_id"`
 	Duration int `json:"duration"`
-	Resource int `json:"resouce"`
+	Resource int `json:"resource"`
 }
 
 type WorkResponse struct {
@@ -17,12 +17,12 @@ type WorkResponse struct {
 type WorkRepository interface {
 	Create(ctx context.Context, work Work) (Id, error)
 	Delete(ctx context.Context, id Id) error
-	List(ctx context.Context, id Id) (WorkResponse, error)
+	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
 }
 
 type WorkService interface {
 	//здесь тоже бизнес-логика
-	Create(ctx context.Context, task Task) (Id, error)
+	Create(ctx context.Context, task Work) (Id, error)
 	Delete(ctx context.Context, id Id) error
-	List(ctx context.Context, id Id) (WorkResponse, error)
+	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
 }
