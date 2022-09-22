@@ -62,31 +62,28 @@ func (w *workOperation) List(ctx context.Context, id domain.Id) (domain.WorkResp
 
 	response.Parental = make([]domain.Work, 0)
 
-	var workId domain.Id
-	var taskId domain.Id
-	var duration int
-	var resource int
+	var work domain.Work
 
 	for result.Next() {
-		err = result.Scan(&workId, &taskId, &duration, &resource)
+		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource)
 
 		if err != nil {
 			fmt.Println("Error occured while trying to show works rows -", err.Error())
 			return response, err
 		}
 
-		if id == workId {
-			response.Main.Id = workId
-			response.Main.TaskId = taskId
-			response.Main.Duration = duration
-			response.Main.Resource = resource
+		if id == work.Id {
+			response.Main.Id = work.Id
+			response.Main.TaskId = work.TaskId
+			response.Main.Duration = work.Duration
+			response.Main.Resource = work.Resource
 
 		} else {
 			response.Parental = append(response.Parental, domain.Work{
-				Id:       workId,
-				TaskId:   taskId,
-				Duration: duration,
-				Resource: resource,
+				Id:       work.Id,
+				TaskId:   work.TaskId,
+				Duration: work.Duration,
+				Resource: work.Resource,
 			})
 		}
 	}
