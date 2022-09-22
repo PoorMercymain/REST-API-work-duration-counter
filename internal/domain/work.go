@@ -15,7 +15,7 @@ type WorkResponse struct {
 }
 
 type WorkRepository interface {
-	Create(ctx context.Context, task Task) (Id, error)
+	Create(ctx context.Context, work Work) (Id, error)
 	Delete(ctx context.Context, id Id) error
 	List(ctx context.Context, id Id) (WorkResponse, error)
 }
