@@ -15,11 +15,12 @@ type server struct {
 	httpServer *http.Server
 }
 
-func New(port string) *server {
+func New(port string, handler http.Handler) *server {
 	var s = new(server)
 	s.httpServer = &http.Server{
-		Addr:           ":" + port,
+		Addr:           "0.0.0.0:" + port,
 		MaxHeaderBytes: 1 << 20,
+		Handler:        handler,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
 	}
