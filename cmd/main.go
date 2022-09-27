@@ -20,15 +20,19 @@ func main() {
 
 	db := repository.NewDb()
 
-	//TODO: add repository, service and handler for task
 	wr := repository.NewWork(db)
 	ws := service.NewWork(wr)
 	wh := handler.NewWork(ws)
+
+	tr := repository.NewTask(db)
+	ts := service.NewTask(tr)
+	th := handler.NewTask(ts)
 
 	r := httprouter.New()
 
 	//TODO: create task and work routes
 	r.POST("/work", wrapHandler(wh.Create))
+	r.POST("/task", wrapHandler(th.Create))
 
 	theServer := server.New("8000", r)
 
