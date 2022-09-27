@@ -14,14 +14,18 @@ func NewTask(repo domain.TaskRepository) *task {
 	return &task{repo: repo}
 }
 
-func (t task) CreateTask(ctx context.Context, task domain.Task) (domain.Id, error) {
-	return t.repo.CreateTask(ctx, task)
+func (s *task) Create(ctx context.Context, task domain.Task) (domain.Id, error) {
+	return s.repo.Create(ctx, task)
 }
 
-func (t task) DeleteTask(ctx context.Context, id domain.Id) error {
-	return t.repo.DeleteTask(ctx, id)
+func (s *task) Update(ctx context.Context, id domain.Id, task domain.Task) error {
+	return s.repo.Update(ctx, id, task)
 }
 
-func (t task) GetTask(ctx context.Context, id domain.Id, tid domain.Id) (domain.Task, error) {
-	return t.repo.GetTask(ctx, id)
+func (s *task) Delete(ctx context.Context, id domain.Id) error {
+	return s.repo.Delete(ctx, id)
+}
+
+func (s *task) GetTask(ctx context.Context, id domain.Id, tid domain.Id) (domain.Task, error) {
+	return s.repo.GetTask(ctx, id)
 }

@@ -14,11 +14,11 @@ func NewWork(db *db) *work {
 	return &work{db: db}
 }
 
-func (w *work) CreateWork(ctx context.Context, work domain.Work) (domain.Id, error) {
+func (r *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) {
 
 	var id domain.Id
 
-	err := w.db.conn.QueryRow(ctx,
+	err := r.db.conn.QueryRow(ctx,
 		`INSERT INTO work (task_id, duration, resource) VALUES ($1, $2, $3) RETURNING id`,
 		work.TaskId, work.Duration, work.Resource).Scan(&id)
 
@@ -29,8 +29,8 @@ func (w *work) CreateWork(ctx context.Context, work domain.Work) (domain.Id, err
 	return id, err
 }
 
-func (w *work) DeleteWork(ctx context.Context, id domain.Id) error {
-	_, err := w.db.conn.Exec(ctx, `DELETE FROM work WHERE id=$1`, id)
+func (r *work) Delete(ctx context.Context, id domain.Id) error {
+	_, err := r.db.conn.Exec(ctx, `DELETE FROM work WHERE id=$1`, id)
 
 	if err != nil {
 		return err
@@ -39,10 +39,10 @@ func (w *work) DeleteWork(ctx context.Context, id domain.Id) error {
 	return err
 }
 
-func (w *work) ListWork(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
+func (r *work) List(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
 	var response domain.WorkResponse
 
-	result, err := w.db.conn.Query(ctx,
+	result, err := r.db.conn.Query(ctx,
 		`SELECT id, task_id, duration, resource FROM work WHERE id <= $1 and task_id = $2`,
 		id, tid)
 

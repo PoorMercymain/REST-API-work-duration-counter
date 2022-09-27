@@ -14,18 +14,19 @@ func NewWork(repo domain.WorkRepository) *work {
 	return &work{repo: repo}
 }
 
-func (w work) CreateWork(ctx context.Context, work domain.Work) (domain.Id, error) {
-	return w.repo.CreateWork(ctx, work)
+func (s *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) {
+	return s.repo.Create(ctx, work)
 }
 
-func (w work) DeleteWork(ctx context.Context, id domain.Id) error {
-	return w.repo.DeleteWork(ctx, id)
+func (s *work) Delete(ctx context.Context, id domain.Id) error {
+	return s.repo.Delete(ctx, id)
 }
 
-func (w work) ListWork(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
-	return w.repo.ListWork(ctx, id, tid)
+func (s *work) List(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
+	return s.repo.List(ctx, id, tid)
 }
 
+// TODO: private
 func (w work) Count(workResponse domain.WorkResponse) int {
 	result := workResponse.Main.Duration
 	for _, parentalElement := range workResponse.Parental {

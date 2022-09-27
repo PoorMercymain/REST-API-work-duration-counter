@@ -15,7 +15,7 @@ func NewWork(srv domain.WorkService) *work {
 	return &work{srv: srv}
 }
 
-func (h work) Create(w http.ResponseWriter, r *http.Request) {
+func (h *work) Create(w http.ResponseWriter, r *http.Request) {
 	var data domain.Work
 
 	defer r.Body.Close()
@@ -38,3 +38,5 @@ func (h work) Create(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
+
+//TODO: implement methods

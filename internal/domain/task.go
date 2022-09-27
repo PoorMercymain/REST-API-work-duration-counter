@@ -12,15 +12,15 @@ type Task struct {
 }
 
 type TaskRepository interface {
-	CreateTask(ctx context.Context, task Task) (Id, error)
-	UpdateTask(ctx context.Context, id Id, task Task) error
-	DeleteTask(ctx context.Context, id Id) error
+	Create(ctx context.Context, task Task) (Id, error)
+	Update(ctx context.Context, id Id, task Task) error
+	Delete(ctx context.Context, id Id) error
 	GetTask(ctx context.Context, id Id) (Task, error)
 }
 
 // TaskService тут бизнес-логика
 type TaskService interface {
-	CreateTask(ctx context.Context, task Task) (Id, error)
-	UpdateTask(ctx context.Context, id Id, task Task) error
-	DeleteTask(ctx context.Context, id Id) error
+	Create(ctx context.Context, task Task) (Id, error)
+	Update(ctx context.Context, id Id, task Task) error
+	Delete(ctx context.Context, id Id) error
 }

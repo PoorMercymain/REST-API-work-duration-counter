@@ -26,13 +26,12 @@ func NewTask(db *db) *task {
 	return &task{db: db}
 }
 
-func (w *task) CreateTask(ctx context.Context, task domain.Task) (domain.Id, error) {
-
+func (r *task) Create(ctx context.Context, task domain.Task) (domain.Id, error) {
 	var id domain.Id
 
-	err := w.db.conn.QueryRow(ctx,
-		`INSERT INTO work (id, order_name, start_date) VALUES ($1, $2, $3) RETURNING id`,
-		task.Id, task.OrderName, task.StartDate).Scan(&id)
+	err := r.db.conn.QueryRow(ctx,
+		`INSERT INTO task (order_name, start_date) VALUES ($1, $2) RETURNING id`,
+		task.OrderName, task.StartDate).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -41,8 +40,8 @@ func (w *task) CreateTask(ctx context.Context, task domain.Task) (domain.Id, err
 	return id, err
 }
 
-func (w *task) DeleteTask(ctx context.Context, id domain.Id) error {
-	_, err := w.db.conn.Exec(ctx, `DELETE FROM task WHERE id=$1`, id)
+func (r *task) Update(ctx context.Context, id domain.Id, task domain.Task) error {
+	_, err := r.db.conn.Exec(ctx, `UPDATE task SET order_name = $1, start_date = $2 WHERE id = $3`, task.OrderName, task.StartDate, id)
 
 	if err != nil {
 		return err
@@ -51,11 +50,20 @@ func (w *task) DeleteTask(ctx context.Context, id domain.Id) error {
 	return err
 }
 
-// поменять сигнатуру в объявлении интерфейса
-func (w *task) GetTask(ctx context.Context, id domain.Id) (domain.Task, error) {
+func (r *task) Delete(ctx context.Context, id domain.Id) error {
+	_, err := r.db.conn.Exec(ctx, `DELETE FROM task WHERE id=$1`, id)
+
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func (r *task) GetTask(ctx context.Context, id domain.Id) (domain.Task, error) {
 	var resultTask domain.Task
 
-	result, err := w.db.conn.Query(ctx,
+	result, err := r.db.conn.Query(ctx,
 		`SELECT id, order_name, start_date FROM task WHERE id = $1`,
 		id)
 

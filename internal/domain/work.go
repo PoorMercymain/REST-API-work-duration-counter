@@ -15,16 +15,16 @@ type WorkResponse struct {
 }
 
 type WorkRepository interface {
-	CreateWork(ctx context.Context, work Work) (Id, error)
-	DeleteWork(ctx context.Context, id Id) error
-	ListWork(ctx context.Context, id Id, tid Id) (WorkResponse, error)
+	Create(ctx context.Context, work Work) (Id, error)
+	Delete(ctx context.Context, id Id) error
+	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
 }
 
 type WorkService interface {
 	//здесь тоже бизнес-логика
 	Count(workResponse WorkResponse) int
 
-	CreateWork(ctx context.Context, task Work) (Id, error)
-	DeleteWork(ctx context.Context, id Id) error
-	ListWork(ctx context.Context, id Id, tid Id) (WorkResponse, error)
+	Create(ctx context.Context, task Work) (Id, error)
+	Delete(ctx context.Context, id Id) error
+	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
 }
