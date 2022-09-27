@@ -14,7 +14,7 @@ func NewWork(db *db) *work {
 	return &work{db: db}
 }
 
-func (w *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) {
+func (w *work) CreateWork(ctx context.Context, work domain.Work) (domain.Id, error) {
 
 	var id domain.Id
 
@@ -29,7 +29,7 @@ func (w *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) 
 	return id, err
 }
 
-func (w *work) Delete(ctx context.Context, id domain.Id) error {
+func (w *work) DeleteWork(ctx context.Context, id domain.Id) error {
 	_, err := w.db.conn.Exec(ctx, `DELETE FROM work WHERE id=$1`, id)
 
 	if err != nil {
@@ -39,7 +39,7 @@ func (w *work) Delete(ctx context.Context, id domain.Id) error {
 	return err
 }
 
-func (w *work) List(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
+func (w *work) ListWork(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
 	var response domain.WorkResponse
 
 	result, err := w.db.conn.Query(ctx,
