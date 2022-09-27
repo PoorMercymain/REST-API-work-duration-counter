@@ -13,7 +13,7 @@ type db struct {
 	conn *pgx.Conn
 }
 
-func New() *db {
+func NewDb() *db {
 	db := new(db)
 
 	var (
@@ -25,8 +25,6 @@ func New() *db {
 	)
 
 	dsn := db.getDsnString(hostname, databaseName, username, password, port)
-
-	log.Println(hostname, databaseName, username, password)
 
 	conn, err := pgx.Connect(context.Background(), dsn)
 
