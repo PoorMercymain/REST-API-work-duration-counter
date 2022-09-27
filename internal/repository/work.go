@@ -30,7 +30,7 @@ func (w *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) 
 }
 
 func (w *work) Delete(ctx context.Context, id domain.Id) error {
-	_, err := w.db.conn.Query(ctx, `DELETE FROM work WHERE id=$1`, id)
+	_, err := w.db.conn.Exec(ctx, `DELETE FROM work WHERE id=$1`, id)
 
 	if err != nil {
 		return err

@@ -36,8 +36,6 @@ func main() {
 		err = theServer.Run()
 	}()
 
-	_ = repository.NewDb()
-
 	fmt.Println("Server started")
 
 	sigChan := make(chan os.Signal, 1)
