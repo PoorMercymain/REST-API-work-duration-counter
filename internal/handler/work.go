@@ -54,4 +54,31 @@ func (h *work) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *work) List(w http.ResponseWriter, r *http.Request) {
+	id, err := router.Params(r).Uint32("id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	taskId, err := router.Params(r).Uint32("task_id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	works, err := h.srv.List(r.Context(), domain.Id(id), domain.Id(taskId))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res := struct {
+		WORKS []domain.Work `json:"works"`
+	}{WORKS: append(works.Parental, works.Main)}
+
+	if err = reply(w, res); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 //TODO: implement methods

@@ -53,4 +53,20 @@ func (h *task) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *task) Update(w http.ResponseWriter, r *http.Request) {
+	var data domain.Task
+
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.srv.Update(r.Context(), data.Id, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
 //TODO: implement methods

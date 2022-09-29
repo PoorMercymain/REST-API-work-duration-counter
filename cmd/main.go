@@ -33,9 +33,11 @@ func main() {
 	//TODO: create task and work routes
 	r.POST("/work", router.WrapHandler(wh.Create))
 	r.DELETE("/work/:id", router.WrapHandler(wh.Delete))
+	r.GET("/works/:id/:task_id", router.WrapHandler(wh.List))
 
 	r.POST("/task", router.WrapHandler(th.Create))
 	r.DELETE("/task/:id", router.WrapHandler(th.Delete))
+	r.PUT("/task", router.WrapHandler(th.Update))
 
 	theServer := server.New("8000", r)
 

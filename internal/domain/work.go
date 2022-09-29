@@ -20,10 +20,9 @@ type WorkRepository interface {
 	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
 }
 
+// здесь тоже бизнес-логика
 type WorkService interface {
-	//здесь тоже бизнес-логика
 	Count(workResponse WorkResponse) int
-
 	Create(ctx context.Context, task Work) (Id, error)
 	Delete(ctx context.Context, id Id) error
 	List(ctx context.Context, id Id, tid Id) (WorkResponse, error)
