@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/handler"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/repository"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/service"
+	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/server"
 
 	"github.com/julienschmidt/httprouter"
@@ -31,8 +31,8 @@ func main() {
 	r := httprouter.New()
 
 	//TODO: create task and work routes
-	r.POST("/work", wrapHandler(wh.Create))
-	r.POST("/task", wrapHandler(th.Create))
+	r.POST("/work", router.WrapHandler(wh.Create))
+	r.POST("/task", router.WrapHandler(th.Create))
 
 	theServer := server.New("8000", r)
 
@@ -50,11 +50,5 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Error occured while running server - %s", err.Error())
-	}
-}
-
-func wrapHandler(h http.HandlerFunc) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		h.ServeHTTP(w, r)
 	}
 }
