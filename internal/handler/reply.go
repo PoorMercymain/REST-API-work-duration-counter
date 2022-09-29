@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
+
+	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 )
 
 func reply(w http.ResponseWriter, data interface{}) error {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	return json.NewEncoder(w).Encode(data)
+	return router.Reply(w, data)
 }
