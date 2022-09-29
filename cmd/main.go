@@ -32,7 +32,7 @@ func main() {
 
 	//TODO: create task and work routes
 	r.POST("/work", router.WrapHandler(wh.Create))
-	r.POST("/work/:id", router.WrapHandler(wh.Delete))
+	r.DELETE("/work/:id", router.WrapHandler(wh.Delete))
 
 	r.POST("/task", router.WrapHandler(th.Create))
 	r.DELETE("/task/:id", router.WrapHandler(th.Delete))
