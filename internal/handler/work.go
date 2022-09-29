@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 	"net/http"
 
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
@@ -36,6 +37,20 @@ func (h *work) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err = reply(w, res); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h *work) Delete(w http.ResponseWriter, r *http.Request) {
+	id, err := router.Params(r).Uint32("id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.srv.Delete(r.Context(), domain.Id(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 }
 

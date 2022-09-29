@@ -31,9 +31,11 @@ func main() {
 	r := httprouter.New()
 
 	//TODO: create task and work routes
-	r.DELETE("/task", wrapHandler(th.Delete))
 	r.POST("/work", router.WrapHandler(wh.Create))
+	r.POST("/work/:id", router.WrapHandler(wh.Delete))
+
 	r.POST("/task", router.WrapHandler(th.Create))
+	r.DELETE("/task/:id", router.WrapHandler(th.Delete))
 
 	theServer := server.New("8000", r)
 

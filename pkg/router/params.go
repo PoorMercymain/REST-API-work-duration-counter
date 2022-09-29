@@ -45,12 +45,12 @@ func (p params) Int(key string) (int, error) {
 	return i, nil
 }
 
-func (p params) Int64(key string) (int64, error) {
+func (p params) Uint32(key string) (uint32, error) {
 	i, err := p.Int(key)
 	if err != nil {
 		return 0, err
 	}
-	return int64(i), nil
+	return uint32(i), nil
 }
 
 func (p params) Uint16(key string) (uint16, error) {
