@@ -39,8 +39,15 @@ func (r *work) Delete(ctx context.Context, id domain.Id) error {
 	return err
 }
 
-func (r *work) List(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
+func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, error) {
 	var response domain.WorkResponse
+	var tid domain.Id
+
+	err := r.db.conn.QueryRow(ctx, `SELECT task_id FROM work WHERE id = $1`, id).Scan(&tid)
+
+	if err != nil {
+		return response, err
+	}
 
 	result, err := r.db.conn.Query(ctx,
 		`SELECT id, task_id, duration, resource FROM work WHERE id <= $1 and task_id = $2`,

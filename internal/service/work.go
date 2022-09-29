@@ -22,8 +22,8 @@ func (s *work) Delete(ctx context.Context, id domain.Id) error {
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *work) List(ctx context.Context, id domain.Id, tid domain.Id) (domain.WorkResponse, error) {
-	return s.repo.List(ctx, id, tid)
+func (s *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, error) {
+	return s.repo.List(ctx, id)
 }
 
 // TODO: private
