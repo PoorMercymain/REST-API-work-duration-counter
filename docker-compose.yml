@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: restapi
       POSTGRES_DB: restapi
     volumes:
-      - $HOME/postgresql/restapi:/var/lib/postgresql/data
+      - C:\postgresql\restapi:/var/lib/postgresql/data
     ports:
       - "3000:5432"
     command: [ "postgres", "-c", "log_statement=all" ]

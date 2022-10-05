@@ -14,7 +14,7 @@ type db struct {
 }
 
 func NewDb() *db {
-	db := new(db)
+	_db := new(db)
 
 	var (
 		hostname     = os.Getenv("REST_API_HOSTNAME")
@@ -24,7 +24,7 @@ func NewDb() *db {
 		port         = os.Getenv("REST_API_PORT")
 	)
 
-	dsn := db.getDsnString(hostname, databaseName, username, password, port)
+	dsn := _db.getDsnString(hostname, databaseName, username, password, port)
 
 	conn, err := pgx.Connect(context.Background(), dsn)
 
@@ -32,8 +32,8 @@ func NewDb() *db {
 		log.Fatalf("Error occured while connecting to database - %v", err)
 	}
 
-	db.conn = conn
-	return db
+	_db.conn = conn
+	return _db
 }
 
 func (d *db) getDsnString(hostname, databaseName, username, password, port string) string {

@@ -6,7 +6,9 @@ create table if not exists task(
 
 create table if not exists work(
     id  serial constraint work_pk PRIMARY KEY,
-    task_id integer constraint work_fk REFERENCES task,
+    task_id integer constraint work_fk REFERENCES task ON DELETE CASCADE,
     duration integer not null,
-    resource integer not null
+    resource integer not null,
+    parent_id integer
 );
+

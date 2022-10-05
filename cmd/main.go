@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,6 +10,7 @@ import (
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/handler"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/repository"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/service"
+	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/server"
 
 	"github.com/julienschmidt/httprouter"
@@ -24,9 +24,20 @@ func main() {
 	ws := service.NewWork(wr)
 	wh := handler.NewWork(ws)
 
+	tr := repository.NewTask(db)
+	ts := service.NewTask(tr)
+	th := handler.NewTask(ts)
+
 	r := httprouter.New()
 
-	r.POST("/work", wrapHandler(wh.Create))
+	//TODO: create task and work routes
+	r.POST("/work", router.WrapHandler(wh.Create))
+	r.DELETE("/work/:id", router.WrapHandler(wh.Delete))
+	r.GET("/works/:id", router.WrapHandler(wh.List))
+
+	r.POST("/task", router.WrapHandler(th.Create))
+	r.DELETE("/task/:id", router.WrapHandler(th.Delete))
+	r.PUT("/task", router.WrapHandler(th.Update))
 
 	theServer := server.New("8000", r)
 
@@ -44,11 +55,5 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Error occured while running server - %s", err.Error())
-	}
-}
-
-func wrapHandler(h http.HandlerFunc) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-		h.ServeHTTP(w, r)
 	}
 }

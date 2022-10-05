@@ -2,22 +2,21 @@ package handler
 
 import (
 	"encoding/json"
+	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 	"net/http"
-
-	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
 )
 
-type work struct {
-	srv domain.WorkService
+type task struct {
+	srv domain.TaskService
 }
 
-func NewWork(srv domain.WorkService) *work {
-	return &work{srv: srv}
+func NewTask(srv domain.TaskService) *task {
+	return &task{srv: srv}
 }
 
-func (h *work) Create(w http.ResponseWriter, r *http.Request) {
-	var data domain.Work
+func (h *task) Create(w http.ResponseWriter, r *http.Request) {
+	var data domain.Task
 
 	defer r.Body.Close()
 	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
@@ -40,7 +39,7 @@ func (h *work) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *work) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *task) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := router.Params(r).Uint32("id")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -54,25 +53,19 @@ func (h *work) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *work) List(w http.ResponseWriter, r *http.Request) {
-	id, err := router.Params(r).Uint32("id")
-	if err != nil {
+func (h *task) Update(w http.ResponseWriter, r *http.Request) {
+	var data domain.Task
+
+	defer r.Body.Close()
+	if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	works, err := h.srv.List(r.Context(), domain.Id(id))
+	err := h.srv.Update(r.Context(), data.Id, data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	res := struct {
-		WORKS []domain.Work `json:"works"`
-	}{WORKS: append(works.Parental, works.Main)}
-
-	if err = reply(w, res); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
