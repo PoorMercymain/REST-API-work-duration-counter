@@ -84,3 +84,29 @@ func (r *task) GetTask(ctx context.Context, id domain.Id) (domain.Task, error) {
 		return resultTask, scanErr
 	}
 }
+
+func (r *task) ListWorksOfTask(ctx context.Context, id domain.Id) ([]domain.Work, error) {
+	var resultWorks = make([]domain.Work, 0)
+
+	result, err := r.db.conn.Query(ctx,
+		`SELECT id, task_id, duration, resource FROM work WHERE task_id = $1`,
+		id)
+
+	if err != nil {
+		return resultWorks, err
+	}
+
+	defer result.Close()
+
+	var currentWork domain.Work
+
+	for result.Next() {
+		err = result.Scan(&currentWork.Id, &currentWork.TaskId, &currentWork.Duration, &currentWork.Resource)
+		if err != nil {
+			return resultWorks, err
+		}
+
+		resultWorks = append(resultWorks, currentWork)
+	}
+	return resultWorks, err
+}

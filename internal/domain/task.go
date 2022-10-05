@@ -16,6 +16,7 @@ type TaskRepository interface {
 	Update(ctx context.Context, id Id, task Task) error
 	Delete(ctx context.Context, id Id) error
 	GetTask(ctx context.Context, id Id) (Task, error)
+	ListWorksOfTask(ctx context.Context, id Id) ([]Work, error)
 }
 
 // TaskService тут бизнес-логика
@@ -23,4 +24,5 @@ type TaskService interface {
 	Create(ctx context.Context, task Task) (Id, error)
 	Update(ctx context.Context, id Id, task Task) error
 	Delete(ctx context.Context, id Id) error
+	ListWorksOfTask(ctx context.Context, id Id) ([]Work, error)
 }
