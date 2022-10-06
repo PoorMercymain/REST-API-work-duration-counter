@@ -17,6 +17,8 @@ type TaskRepository interface {
 	Delete(ctx context.Context, id Id) error
 	GetTask(ctx context.Context, id Id) (Task, error)
 	ListWorksOfTask(ctx context.Context, id Id) ([]Work, error)
+	FindRoot(ctx context.Context, works []Work) Work
+	FindLeafs(ctx context.Context, works []Work) []Work
 }
 
 // TaskService тут бизнес-логика

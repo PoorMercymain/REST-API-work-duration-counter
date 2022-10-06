@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
 )
 
@@ -12,6 +11,15 @@ func newScanError(text string) error {
 
 type scanError struct {
 	s string
+}
+
+type Node interface {
+	AddNext() Node
+	MoveTo() []Node
+}
+
+type TreeNode struct {
+	children []Node
 }
 
 func (e *scanError) Error() string {
@@ -80,7 +88,7 @@ func (r *task) GetTask(ctx context.Context, id domain.Id) (domain.Task, error) {
 		}
 		return resultTask, err
 	} else {
-		scanErr := newScanError("Error occured while scaning sql row")
+		scanErr := newScanError("Error occurred while scanning sql row")
 		return resultTask, scanErr
 	}
 }
@@ -109,4 +117,19 @@ func (r *task) ListWorksOfTask(ctx context.Context, id domain.Id) ([]domain.Work
 		resultWorks = append(resultWorks, currentWork)
 	}
 	return resultWorks, err
+}
+
+func (r *task) FindRoot(ctx context.Context, works []domain.Work) domain.Work {
+	var rootId domain.Id
+
+	for _, currentNode := range works {
+		if rootId == currentNode.Id {
+			return currentNode
+		}
+	}
+	return domain.Work{Id: 0, TaskId: 0, Duration: 0, Resource: 0}
+}
+
+func (r *task) FindLeafs(ctx context.Context, works domain.Work) []domain.Work {
+	return make([]domain.Work, 0) //placeholder
 }
