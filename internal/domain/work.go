@@ -7,6 +7,7 @@ type Work struct {
 	TaskId   Id  `json:"task_id"`
 	Duration int `json:"duration"`
 	Resource int `json:"resource"`
+	ParentId Id  `json:"parent_id"`
 }
 
 type WorkResponse struct {

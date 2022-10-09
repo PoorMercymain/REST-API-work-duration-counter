@@ -19,8 +19,8 @@ func (r *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) 
 	var id domain.Id
 
 	err := r.db.conn.QueryRow(ctx,
-		`INSERT INTO work (task_id, duration, resource) VALUES ($1, $2, $3) RETURNING id`,
-		work.TaskId, work.Duration, work.Resource).Scan(&id)
+		`INSERT INTO work (task_id, duration, resource, parent_id) VALUES ($1, $2, $3, $4) RETURNING id`,
+		work.TaskId, work.Duration, work.Resource, work.ParentId).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -50,7 +50,7 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 	}
 
 	result, err := r.db.conn.Query(ctx,
-		`SELECT id, task_id, duration, resource FROM work WHERE id <= $1 and task_id = $2`,
+		`SELECT id, task_id, duration, resource, parent_id FROM work WHERE id <= $1 and task_id = $2`,
 		id, tid)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 	var work domain.Work
 
 	for result.Next() {
-		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource)
+		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource, &work.ParentId)
 
 		if err != nil {
 			return response, err
