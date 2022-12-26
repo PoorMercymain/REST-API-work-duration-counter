@@ -97,7 +97,7 @@ func (r *task) ListWorksOfTask(ctx context.Context, id domain.Id) ([]domain.Work
 	var resultWorks = make([]domain.Work, 0)
 
 	result, err := r.db.conn.Query(ctx,
-		`SELECT id, task_id, duration, resource, parent_id FROM work WHERE task_id = $1`,
+		`SELECT id, task_id, duration, resource, previous_ids FROM work WHERE task_id = $1`,
 		id)
 
 	if err != nil {
@@ -108,14 +108,22 @@ func (r *task) ListWorksOfTask(ctx context.Context, id domain.Id) ([]domain.Work
 
 	var currentWork domain.Work
 
+	var previousIdsBuffer = make([]uint32, 0)
 	for result.Next() {
-		err = result.Scan(&currentWork.Id, &currentWork.TaskId, &currentWork.Duration, &currentWork.Resource, &currentWork.ParentId)
+
+		err = result.Scan(&currentWork.Id, &currentWork.TaskId, &currentWork.Duration, &currentWork.Resource, &previousIdsBuffer)
 		if err != nil {
 			return resultWorks, err
 		}
 
+		currentWork.PreviousIds = make([]domain.Id, 0)
+
+		for _, previousId := range previousIdsBuffer {
+			currentWork.PreviousIds = append(currentWork.PreviousIds, domain.Id(previousId))
+		}
 		resultWorks = append(resultWorks, currentWork)
 	}
+
 	return resultWorks, err
 }
 
@@ -134,7 +142,21 @@ func (r *task) dropElementFromWorksSlice(index int, someSlice []domain.Work) []d
 	return append(someSlice[:index], someSlice[index+1:]...)
 }
 
-func (r *task) FindLeafs(ctx context.Context, works []domain.Work) []domain.Work {
+func (r *task) UpdateOrCreateIfNotExists(ctx context.Context, task domain.Task) error {
+	var id domain.Id
+
+	err := r.db.conn.QueryRow(ctx,
+		`INSERT INTO task (id, order_name, start_date) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET order_name = $2, start_date = $3`,
+		task.Id, task.OrderName, task.StartDate).Scan(&id)
+
+	if err != nil {
+		return err
+	}
+
+	return err
+} //INSERT INTO table (a,b,c) VALUES (4,5,6) ON DUPLICATE KEY UPDATE c=9;
+
+/*func (r *task) FindLeafs(ctx context.Context, works []domain.Work) []domain.Work {
 	//находим root
 	root := r.FindRoot(ctx, works)
 	//начальная инициализация слайса последних узлов
@@ -162,7 +184,7 @@ func (r *task) FindLeafs(ctx context.Context, works []domain.Work) []domain.Work
 		//цикл по всем последним узлам
 		for _, node := range lastNodes {
 			//если среди последних узлов есть такой, чей id == parentId текущей работы, добавляем текущую работу в слайс работ, требующих проверки, а последний узел - в проверенные работы
-			if element.ParentId == node.Id {
+			if element.PreviousIds == node.Id {
 				checkedNodes = append(checkedNodes, node)
 				nodesToCheck = append(nodesToCheck, element)
 			}
@@ -194,4 +216,4 @@ func (r *task) FindLeafs(ctx context.Context, works []domain.Work) []domain.Work
 	}
 	//возвращаем слайс последних работ
 	return lastNodes
-}
+}*/

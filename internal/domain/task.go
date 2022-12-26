@@ -18,7 +18,8 @@ type TaskRepository interface {
 	GetTask(ctx context.Context, id Id) (Task, error)
 	ListWorksOfTask(ctx context.Context, id Id) ([]Work, error)
 	FindRoot(ctx context.Context, works []Work) Work
-	FindLeafs(ctx context.Context, works []Work) []Work
+	UpdateOrCreateIfNotExists(ctx context.Context, task Task) error
+	//FindLeafs(ctx context.Context, works []Work) []Work
 }
 
 // TaskService тут бизнес-логика
@@ -27,4 +28,8 @@ type TaskService interface {
 	Update(ctx context.Context, id Id, task Task) error
 	Delete(ctx context.Context, id Id) error
 	ListWorksOfTask(ctx context.Context, id Id) ([]Work, error)
+	CreateTestTasks(ctx context.Context) error
+	CountDuration(ctx context.Context, id Id) (uint64, error)
+	CountAllDuration(ctx context.Context) (int, string, error)
+	//FindMinDurationFromCalculated(ctx context.Context) int
 }

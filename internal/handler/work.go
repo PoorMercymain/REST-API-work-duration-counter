@@ -76,4 +76,8 @@ func (h *work) List(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *work) CreateTestWorks(w http.ResponseWriter, r *http.Request) {
+	h.srv.CreateTestWorks(r.Context())
+}
+
 //TODO: implement methods
