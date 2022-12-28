@@ -61,10 +61,14 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 
 	response.Parental = make([]domain.Work, 0)
 
-	var work domain.Work
-
 	for result.Next() {
-		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource, &work.PreviousIds)
+		var work domain.Work
+		previous := make([]uint32, 0)
+		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource, &previous)
+
+		for n := range previous {
+			work.PreviousIds[n] = domain.Id(previous[n])
+		}
 
 		if err != nil {
 			return response, err

@@ -1,56 +1,70 @@
-package service
+package counter
 
 import (
 	"context"
 	"fmt"
-	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
 	api "github.com/PoorMercymain/REST-API-work-duration-counter/pkg/api/api/proto"
-	"google.golang.org/grpc"
+	"github.com/go-redis/redis/v8"
+	"log"
 	"math/rand"
 	"sort"
+	"strconv"
 	"time"
 )
 
-type task struct {
-	repo domain.TaskRepository
+type GRPCServer struct{}
+
+func (G GRPCServer) Count(ctx context.Context, request *api.CountRequest) (*api.CountResponse, error) {
+	duration, path, err := CountAllDuration()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(strconv.Itoa(duration), path)
+	fmt.Println(request.CountNeeded, "<- sent from server")
+	return &api.CountResponse{Result: "110"}, nil
 }
 
-func NewTask(repo domain.TaskRepository) *task {
-	return &task{repo: repo}
+func (G GRPCServer) MustEmbedUnimplementedCounterServer() {
+
+	panic("this method is redundant")
 }
 
-func (s *task) Create(ctx context.Context, task domain.Task) (domain.Id, error) {
-	return s.repo.Create(ctx, task)
+func RedisConnect() *redis.Client {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	return rdb
+}
+func RedisSet(rdb *redis.Client, key string, value string) {
+	var ctx = context.Background()
+	err := rdb.Set(ctx, key, value, 0).Err()
+	if err != nil {
+		panic(err)
+	}
+}
+func RedisGet(rdb *redis.Client, key string) string {
+	var ctx = context.Background()
+	val, err := rdb.Get(ctx, key).Result()
+	if err != nil {
+		return ""
+	}
+	return val
 }
 
-func (s *task) Update(ctx context.Context, id domain.Id, task domain.Task) error {
-	return s.repo.Update(ctx, id, task)
-}
-
-func (s *task) Delete(ctx context.Context, id domain.Id) error {
-	return s.repo.Delete(ctx, id)
-}
-
-func (s *task) GetTask(ctx context.Context, id domain.Id) (domain.Task, error) {
-	return s.repo.GetTask(ctx, id)
-}
-
-func (s *task) ListWorksOfTask(ctx context.Context, id domain.Id) ([]domain.Work, error) {
-	return s.repo.ListWorksOfTask(ctx, id)
-}
-
-func (s *task) CreateTestTasks(ctx context.Context) error {
-	//var workRepo domain.WorkRepository
+/*func (s *task) CreateTestTasks(ctx context.Context) error {
+	//var workRepo WorkRepository
 	var err error
 
-	//var initTask domain.Task
+	//var initTask Task
 	generationChan := make([]chan int, 0)
 	for j := 0; j < 10; j++ {
 		var currentChan chan int
 		generationChan = append(generationChan, currentChan)
 		go func() {
 			for i := 0; i < 100000/4; i++ {
-				err = s.repo.UpdateOrCreateIfNotExists(ctx, domain.Task{Id: domain.Id((i * j) + 1), OrderName: fmt.Sprintf("Task number %d", (i*j)+1), StartDate: time.Now()})
+				err = s.repo.UpdateOrCreateIfNotExists(ctx, Task{Id: Id((i * j) + 1), OrderName: fmt.Sprintf("Task number %d", (i*j)+1), StartDate: time.Now()})
 			}
 			currentChan <- 1
 		}()
@@ -63,7 +77,7 @@ func (s *task) CreateTestTasks(ctx context.Context) error {
 	return err
 }
 
-func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) {
+func (s *task) CountDuration(ctx context.Context, id Id) (uint64, error) {
 	allWorksOfTaskSlice, err := s.repo.ListWorksOfTask(ctx, id)
 
 	rand.Seed(time.Now().Unix())
@@ -72,21 +86,21 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 		return 0, err
 	}
 
-	doneWorksSlice := make([]domain.Work, 0)
+	doneWorksSlice := make([]Work, 0)
 
-	undoneWorksSlice := make([]domain.Work, 0)
+	undoneWorksSlice := make([]Work, 0)
 
-	availableWorksSlice := make([]domain.Work, 0)
+	availableWorksSlice := make([]Work, 0)
 
-	inProgressWorksSlice := make([]domain.Work, 0)
+	inProgressWorksSlice := make([]Work, 0)
 
 	resources := 10
 
-	toDropAvailableIds := make([]domain.Id, 0)
+	toDropAvailableIds := make([]Id, 0)
 
-	toDropInProgressIds := make([]domain.Id, 0)
+	toDropInProgressIds := make([]Id, 0)
 
-	choosen := make([]domain.Work, 0)
+	choosen := make([]Work, 0)
 
 	var minDuration int
 
@@ -147,7 +161,7 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 			availableWorksSlice = dropElementFromWorkSliceById(availableWorksSlice, element)
 		}
 		//очищаем слайс id
-		toDropAvailableIds = make([]domain.Id, 0)
+		toDropAvailableIds = make([]Id, 0)
 
 		//находим минимальную длительность среди выполняемых работ, а также индекс соответствующего элемента
 		_, minDuration = findMinDurationAndIndex(inProgressWorksSlice)
@@ -183,7 +197,7 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 		fmt.Println(undoneWorksSlice, "<-")
 
 		//очищаем слайс удаляемых из обработки работ
-		toDropInProgressIds = make([]domain.Id, 0)
+		toDropInProgressIds = make([]Id, 0)
 
 		//когда нету невыполненных работ - возвращаем вычисленное значение
 		if len(undoneWorksSlice) == 0 {
@@ -201,7 +215,7 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 		return 0, err
 	}
 
-	worksAvailable := make([]domain.Work, 0)
+	worksAvailable := make([]Work, 0)
 
 	for _, currentWork := range allWorksSlice {
 		if len(currentWork.PreviousIds) == 0 {
@@ -218,8 +232,8 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 	fmt.Println(worksAvailable, "debug") //debug
 
 	resources := 10
-	worksInProgress := make([]domain.Work, 0)
-	worksDone := make([]domain.Work, 0)
+	worksInProgress := make([]Work, 0)
+	worksDone := make([]Work, 0)
 
 	for _, currentWork := range worksAvailable {
 		if resources == 0 {
@@ -243,7 +257,7 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 
 	fmt.Println(worksSliceInitialLength, "debug2")
 
-	elementsIdsToDrop := make([]domain.Id, 0)
+	elementsIdsToDrop := make([]Id, 0)
 
 	var result int
 
@@ -282,7 +296,7 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 			}
 		}
 
-		elementsIdsToDrop = make([]domain.Id, 0)
+		elementsIdsToDrop = make([]Id, 0)
 
 		for ind := range worksInProgress {
 			worksInProgress[ind].Duration -= minDuration
@@ -333,6 +347,22 @@ func (s *task) CountDuration(ctx context.Context, id domain.Id) (uint64, error) 
 		}
 	}
 	return 403, nil*/
+//}
+
+type Id uint32
+
+type Task struct {
+	Id        Id        `json:"id"`
+	OrderName string    `json:"order_name"`
+	StartDate time.Time `json:"start_date"`
+}
+
+type Work struct {
+	Id          Id   `json:"id"`
+	TaskId      Id   `json:"task_id"`
+	Duration    int  `json:"duration"`
+	Resource    int  `json:"resource"`
+	PreviousIds []Id `json:"previous_ids"`
 }
 
 func findMinValueAndIndex(slice []int) (int, int) {
@@ -352,147 +382,140 @@ func findMinValueAndIndex(slice []int) (int, int) {
 	return min, index
 }
 
-func (s *task) CountAllDuration(ctx context.Context) (string, error) {
-	conn, err := grpc.Dial("localhost:8081", grpc.WithInsecure())
-	if err != nil {
-		fmt.Println(err)
+func CountAllDuration() (int, string, error) {
+	type resultStruct struct {
+		Duration  int
+		WorksPath []Work
 	}
 
-	c := api.NewCounterClient(conn)
-	res, err := c.Count(context.Background(), &api.CountRequest{CountNeeded: "yes"})
-	if err != nil {
-		fmt.Println(err)
+	amount := 1000
+	allTasks := make([]Task, 0)
+	for v := 0; v < amount; v++ {
+		allTasks = append(allTasks, Task{Id: Id(v + 1), OrderName: fmt.Sprintf("Task number %d", v+1), StartDate: time.Now()})
 	}
 
-	fmt.Println(res, "<- sent from client got by server")
-	return res.Result, err
+	worksBuffer := make([]Work, 0)
+	goDoneChans := make([]chan bool, 0)
+	result := make([]resultStruct, 0)
+	for v := 0; v < amount; v++ {
+		firstAndThird := make([]Id, 0)
+		firstAndThird = append(firstAndThird, Id(1+(v*26)))
+		firstAndThird = append(firstAndThird, Id(3+(v*26)))
+		first := make([]Id, 0)
+		first = append(first, Id(1+(v*26)))
+		third := make([]Id, 0)
+		third = append(third, Id(3+(v*26)))
+		secondThirdAndFourth := make([]Id, 0)
+		secondThirdAndFourth = append(secondThirdAndFourth, Id(2+(v*26)))
+		secondThirdAndFourth = append(secondThirdAndFourth, Id(3+(v*26)))
+		secondThirdAndFourth = append(secondThirdAndFourth, Id(4+(v*26)))
 
-	///*type resultStruct struct {
-	//	Duration  int
-	//	WorksPath []domain.Work
-	//}
-	//
-	//amount := 100
-	//allTasks := make([]domain.Task, 0)
-	//for v := 0; v < amount; v++ {
-	//	allTasks = append(allTasks, domain.Task{Id: domain.Id(v + 1), OrderName: fmt.Sprintf("Task number %d", v+1), StartDate: time.Now()})
-	//}
-	//
-	//worksBuffer := make([]domain.Work, 0)
-	//goDoneChans := make([]chan bool, 0)
-	//result := make([]resultStruct, 0)
-	//for v := 0; v < amount; v++ {
-	//	firstAndThird := make([]domain.Id, 0)
-	//	firstAndThird = append(firstAndThird, domain.Id(1+(v*26)))
-	//	firstAndThird = append(firstAndThird, domain.Id(3+(v*26)))
-	//	first := make([]domain.Id, 0)
-	//	first = append(first, domain.Id(1+(v*26)))
-	//	third := make([]domain.Id, 0)
-	//	third = append(third, domain.Id(3+(v*26)))
-	//	secondThirdAndFourth := make([]domain.Id, 0)
-	//	secondThirdAndFourth = append(secondThirdAndFourth, domain.Id(2+(v*26)))
-	//	secondThirdAndFourth = append(secondThirdAndFourth, domain.Id(3+(v*26)))
-	//	secondThirdAndFourth = append(secondThirdAndFourth, domain.Id(4+(v*26)))
-	//
-	//	//fmt.Println(v+1, "iter")
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(1 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 45000, Resource: 7})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(2 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 2500, Resource: 6})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(3 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 500, Resource: 8})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(4 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 40000, Resource: 5, PreviousIds: third})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(5 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 45000, Resource: 7, PreviousIds: firstAndThird})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(6 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 4000, Resource: 8, PreviousIds: first})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(7 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 3000, Resource: 2, PreviousIds: secondThirdAndFourth})
-	//	worksBuffer = append(worksBuffer, domain.Work{Id: domain.Id(8 + (v * 26)), TaskId: domain.Id(v + 1), Duration: 1000, Resource: 9})
-	//
-	//	newChan := make(chan bool)
-	//	goDoneChans = append(goDoneChans, newChan)
-	//
-	//}
-	//
-	//allDoneChannel := make(chan bool)
-	//
-	//doneSlice := make([]bool, 0)
-	//for h := 0; h < amount; h++ {
-	//	doneSlice = append(doneSlice, false)
-	//}
-	//
-	//for g /*, currentChan*/ := range goDoneChans {
-	//	doneSliceElement := &doneSlice[g]
-	//	go func() {
-	//		durationBuffer, doneSliceBuffer := calculate(worksBuffer[(8*g):8*(g+1)], doneSliceElement)
-	//		result = append(result, resultStruct{Duration: durationBuffer, WorksPath: doneSliceBuffer})
-	//		fmt.Println("another goroutine worked out...")
-	//		//fmt.Println(doneSlice)
-	//	}()
-	//}
-	//
-	//go func() {
-	//	for {
-	//		channelsDoneBoolSlice := make([]bool, amount)
-	//		isDone := false
-	//		for i := range channelsDoneBoolSlice {
-	//			channelsDoneBoolSlice[i] = doneSlice[i]
-	//			//fmt.Println(channelsDoneBoolSlice)
-	//			if channelsDoneBoolSlice[i] {
-	//				if i == len(channelsDoneBoolSlice)-1 {
-	//					isDone = true
-	//					fmt.Println(isDone, "<- done")
-	//				}
-	//			} else {
-	//				break
-	//			}
-	//		}
-	//
-	//		if isDone {
-	//			allDoneChannel <- true
-	//			break
-	//		}
-	//	}
-	//
-	//}()
-	//
-	//<-allDoneChannel
-	//fmt.Println("все сработало")
-	//
-	//allTasks = make([]domain.Task, 0)
-	//worksBuffer = make([]domain.Work, 0)
-	//goDoneChans = make([]chan bool, 0)
-	//
-	//resDuration := make([]int, 0)
-	//for x := range result {
-	//	resDuration = append(resDuration, result[x].Duration)
-	//}
-	//
-	//res, ind := findMinValueAndIndex(resDuration)
-	//path := fmt.Sprintf("%v", result[ind].WorksPath)
-	//
-	//rdb := repository.RedisConnect()
-	//repository.RedisSet(rdb, "duration", strconv.Itoa(res))
-	//repository.RedisSet(rdb, "path", path)
-	//fmt.Println(repository.RedisGet(rdb, "path"), " <- это из редиса")
-	//
-	//return res, path, nil*/
+		//fmt.Println(v+1, "iter")
+		worksBuffer = append(worksBuffer, Work{Id: Id(1 + (v * 26)), TaskId: Id(v + 1), Duration: 45000, Resource: 7})
+		worksBuffer = append(worksBuffer, Work{Id: Id(2 + (v * 26)), TaskId: Id(v + 1), Duration: 2500, Resource: 6})
+		worksBuffer = append(worksBuffer, Work{Id: Id(3 + (v * 26)), TaskId: Id(v + 1), Duration: 500, Resource: 8})
+		worksBuffer = append(worksBuffer, Work{Id: Id(4 + (v * 26)), TaskId: Id(v + 1), Duration: 40000, Resource: 5, PreviousIds: third})
+		worksBuffer = append(worksBuffer, Work{Id: Id(5 + (v * 26)), TaskId: Id(v + 1), Duration: 45000, Resource: 7, PreviousIds: firstAndThird})
+		worksBuffer = append(worksBuffer, Work{Id: Id(6 + (v * 26)), TaskId: Id(v + 1), Duration: 4000, Resource: 8, PreviousIds: first})
+		worksBuffer = append(worksBuffer, Work{Id: Id(7 + (v * 26)), TaskId: Id(v + 1), Duration: 3000, Resource: 2, PreviousIds: secondThirdAndFourth})
+		worksBuffer = append(worksBuffer, Work{Id: Id(8 + (v * 26)), TaskId: Id(v + 1), Duration: 1000, Resource: 9})
+
+		newChan := make(chan bool)
+		goDoneChans = append(goDoneChans, newChan)
+
+	}
+
+	allDoneChannel := make(chan bool)
+
+	doneSlice := make([]bool, 0)
+	for h := 0; h < amount; h++ {
+		doneSlice = append(doneSlice, false)
+	}
+
+	for g := range goDoneChans {
+		doneSliceElement := &doneSlice[g]
+		go func() {
+			durationBuffer, doneSliceBuffer := calculate(worksBuffer[(8*g):8*(g+1)], doneSliceElement)
+			result = append(result, resultStruct{Duration: durationBuffer, WorksPath: doneSliceBuffer})
+			fmt.Println("another goroutine worked out...")
+		}()
+	}
+
+	go func() {
+		for {
+			channelsDoneBoolSlice := make([]bool, amount)
+			isDone := false
+			for i := range channelsDoneBoolSlice {
+				channelsDoneBoolSlice[i] = doneSlice[i]
+				//fmt.Println(channelsDoneBoolSlice)
+				if channelsDoneBoolSlice[i] {
+					if i == len(channelsDoneBoolSlice)-1 {
+						isDone = true
+						fmt.Println(isDone, "<- done")
+					}
+				} else {
+					break
+				}
+			}
+
+			if isDone {
+				allDoneChannel <- true
+				break
+			}
+		}
+
+	}()
+
+	<-allDoneChannel
+	fmt.Println("все сработало")
+
+	allTasks = make([]Task, 0)
+	worksBuffer = make([]Work, 0)
+	goDoneChans = make([]chan bool, 0)
+
+	resDuration := make([]int, 0)
+	for x := range result {
+		resDuration = append(resDuration, result[x].Duration)
+	}
+
+	res, ind := findMinValueAndIndex(resDuration)
+
+	for a := range result[ind].WorksPath {
+		result[ind].WorksPath[a].Id %= 26
+		for b := range result[ind].WorksPath[a].PreviousIds {
+			result[ind].WorksPath[a].PreviousIds[b] %= 26
+		}
+	}
+
+	path := fmt.Sprintf("%v", result[ind].WorksPath)
+
+	rdb := RedisConnect()
+	RedisSet(rdb, "duration", strconv.Itoa(res))
+	RedisSet(rdb, "path", path)
+	fmt.Println(RedisGet(rdb, "path"), " <- это из редиса")
+
+	return res, path, nil
 }
 
-func calculate(allWorksOfTaskSlice []domain.Work, done *bool) (int, []domain.Work) {
+func calculate(allWorksOfTaskSlice []Work, done *bool) (int, []Work) {
 	defer func() { *done = true }()
 	rand.Seed(time.Now().Unix())
 
-	doneWorksSlice := make([]domain.Work, 0)
+	doneWorksSlice := make([]Work, 0)
 
-	undoneWorksSlice := make([]domain.Work, 0)
+	undoneWorksSlice := make([]Work, 0)
 
-	availableWorksSlice := make([]domain.Work, 0)
+	availableWorksSlice := make([]Work, 0)
 
-	inProgressWorksSlice := make([]domain.Work, 0)
+	inProgressWorksSlice := make([]Work, 0)
 
 	resources := 10
 
-	toDropAvailableIds := make([]domain.Id, 0)
+	toDropAvailableIds := make([]Id, 0)
 
-	toDropInProgressIds := make([]domain.Id, 0)
+	toDropInProgressIds := make([]Id, 0)
 
-	choosen := make([]domain.Work, 0)
+	choosen := make([]Work, 0)
 
 	var minDuration int
 
@@ -553,7 +576,7 @@ func calculate(allWorksOfTaskSlice []domain.Work, done *bool) (int, []domain.Wor
 			availableWorksSlice = dropElementFromWorkSliceById(availableWorksSlice, element)
 		}
 		//очищаем слайс id
-		toDropAvailableIds = make([]domain.Id, 0)
+		toDropAvailableIds = make([]Id, 0)
 
 		//находим минимальную длительность среди выполняемых работ, а также индекс соответствующего элемента
 		_, minDuration = findMinDurationAndIndex(inProgressWorksSlice)
@@ -572,7 +595,9 @@ func calculate(allWorksOfTaskSlice []domain.Work, done *bool) (int, []domain.Wor
 			//если продолжительность == 0 - работа выполнена и ее надо удалить
 			if inProgressWorksSlice[i].Duration == 0 {
 				toDropInProgressIds = append(toDropInProgressIds, inProgressWorksSlice[i].Id)
-				doneWorksSlice = append(doneWorksSlice, inProgressWorksSlice[i])
+				ind := findWorkById(allWorksOfTaskSlice, inProgressWorksSlice[i].Id)
+				doneWork := allWorksOfTaskSlice[ind]
+				doneWorksSlice = append(doneWorksSlice, doneWork)
 				resources += inProgressWorksSlice[i].Resource
 			}
 		}
@@ -589,17 +614,18 @@ func calculate(allWorksOfTaskSlice []domain.Work, done *bool) (int, []domain.Wor
 		//fmt.Println(undoneWorksSlice, "<-")
 
 		//очищаем слайс удаляемых из обработки работ
-		toDropInProgressIds = make([]domain.Id, 0)
+		toDropInProgressIds = make([]Id, 0)
 
 		//когда нету невыполненных работ - возвращаем вычисленное значение
 		if len(undoneWorksSlice) == 0 {
 			fmt.Println(result, "итог")
+
 			return result, doneWorksSlice
 		}
 	}
 }
 
-func findMinDurationAndIndex(slice []domain.Work) (int, int) {
+func findMinDurationAndIndex(slice []Work) (int, int) {
 	min := 0
 	index := -1
 
@@ -616,7 +642,7 @@ func findMinDurationAndIndex(slice []domain.Work) (int, int) {
 	return index, min
 }
 
-func findWorkById(slice []domain.Work, id domain.Id) int {
+func findWorkById(slice []Work, id Id) int {
 	for i, element := range slice {
 		if element.Id == id {
 			return i
@@ -625,7 +651,7 @@ func findWorkById(slice []domain.Work, id domain.Id) int {
 	return -1
 }
 
-func dropElementFromWorkSliceById(slice []domain.Work, id domain.Id) []domain.Work {
+func dropElementFromWorkSliceById(slice []Work, id Id) []Work {
 	index := findWorkById(slice, id)
 	if index != -1 {
 		if index != len(slice)-1 {
@@ -633,5 +659,5 @@ func dropElementFromWorkSliceById(slice []domain.Work, id domain.Id) []domain.Wo
 		}
 		return slice[:index]
 	}
-	return make([]domain.Work, 0)
+	return make([]Work, 0)
 }

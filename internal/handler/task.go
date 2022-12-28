@@ -112,15 +112,15 @@ func (h *task) CreateTestTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *task) CountAll(w http.ResponseWriter, r *http.Request) {
-	duration, path, err := h.srv.CountAllDuration(r.Context())
+	res, err := h.srv.CountAllDuration(r.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	path = fmt.Sprintf("%d, %s", duration, path)
+	re := fmt.Sprintf("%s", res)
 
-	if err = reply(w, path); err != nil {
+	if err = reply(w, re); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

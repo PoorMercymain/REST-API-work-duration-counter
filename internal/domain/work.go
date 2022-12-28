@@ -22,7 +22,6 @@ type WorkRepository interface {
 	CreateOrUpdateIfNotExists(ctx context.Context, work Work)
 }
 
-// здесь тоже бизнес-логика
 type WorkService interface {
 	Count(workResponse WorkResponse) int
 	Create(ctx context.Context, task Work) (Id, error)
