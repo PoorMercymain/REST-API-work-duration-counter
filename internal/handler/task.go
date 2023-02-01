@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/internal/domain"
 	"github.com/PoorMercymain/REST-API-work-duration-counter/pkg/router"
 	"net/http"
@@ -66,6 +67,61 @@ func (h *task) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (h *task) ListWorksOfTask(w http.ResponseWriter, r *http.Request) {
+	id, err := router.Params(r).Uint32("id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	works, err := h.srv.ListWorksOfTask(r.Context(), domain.Id(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = reply(w, works); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h *task) CountDuration(w http.ResponseWriter, r *http.Request) {
+	id, err := router.Params(r).Uint32("id")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	result, err := h.srv.CountDuration(r.Context(), domain.Id(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if err = reply(w, result); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (h *task) CreateTestTasks(w http.ResponseWriter, r *http.Request) {
+	err := h.srv.CreateTestTasks(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (h *task) CountAll(w http.ResponseWriter, r *http.Request) {
+	res, err := h.srv.CountAllDuration(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	re := fmt.Sprintf("%s", res)
+
+	if err = reply(w, re); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 

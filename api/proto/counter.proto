@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api;
+option go_package = "pkg/api";
+
+service Counter {
+  rpc Count(CountRequest) returns (CountResponse) {}
+}
+
+message CountRequest {
+  string countNeeded = 1;
+}
+
+message CountResponse {
+  string result = 1;
+}

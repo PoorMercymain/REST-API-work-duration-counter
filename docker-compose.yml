@@ -14,3 +14,11 @@ services:
     ports:
       - "3000:5432"
     command: [ "postgres", "-c", "log_statement=all" ]
+  redis:
+    image: redis
+    container_name: restapi_redis
+    ports:
+      - "6379:6379"
+    restart: always
+    volumes:
+      - C:\redis\restapi:/data

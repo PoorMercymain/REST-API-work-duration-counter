@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"go/build"
 	"log"
 	"os"
 	"os/signal"
@@ -18,6 +19,11 @@ import (
 
 func main() {
 
+	fmt.Println(build.Default.GOPATH, "GOPATH")
+	rdb := repository.RedisConnect()
+	repository.RedisSet(rdb, "it", "works!")
+	fmt.Println(repository.RedisGet(rdb, "it"), "HERE!!!")
+
 	db := repository.NewDb()
 
 	wr := repository.NewWork(db)
@@ -30,14 +36,18 @@ func main() {
 
 	r := httprouter.New()
 
-	//TODO: create task and work routes
 	r.POST("/work", router.WrapHandler(wh.Create))
 	r.DELETE("/work/:id", router.WrapHandler(wh.Delete))
 	r.GET("/works/:id", router.WrapHandler(wh.List))
+	r.GET("/createTestWorks/", router.WrapHandler(wh.CreateTestWorks))
 
 	r.POST("/task", router.WrapHandler(th.Create))
 	r.DELETE("/task/:id", router.WrapHandler(th.Delete))
 	r.PUT("/task", router.WrapHandler(th.Update))
+	r.GET("/taskWorks/:id", router.WrapHandler(th.ListWorksOfTask))
+	r.GET("/taskCount/:id", router.WrapHandler(th.CountDuration))
+	r.GET("/createTestTasks/", router.WrapHandler(th.CreateTestTasks))
+	r.GET("/countAll/", router.WrapHandler(th.CountAll))
 
 	theServer := server.New("8000", r)
 

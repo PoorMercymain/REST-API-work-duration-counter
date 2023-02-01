@@ -19,8 +19,8 @@ func (r *work) Create(ctx context.Context, work domain.Work) (domain.Id, error) 
 	var id domain.Id
 
 	err := r.db.conn.QueryRow(ctx,
-		`INSERT INTO work (task_id, duration, resource) VALUES ($1, $2, $3) RETURNING id`,
-		work.TaskId, work.Duration, work.Resource).Scan(&id)
+		`INSERT INTO work (task_id, duration, resource, previous_ids) VALUES ($1, $2, $3, $4) RETURNING id`,
+		work.TaskId, work.Duration, work.Resource, work.PreviousIds).Scan(&id)
 
 	if err != nil {
 		return 0, err
@@ -50,7 +50,7 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 	}
 
 	result, err := r.db.conn.Query(ctx,
-		`SELECT id, task_id, duration, resource FROM work WHERE id <= $1 and task_id = $2`,
+		`SELECT id, task_id, duration, resource, previous_ids FROM work WHERE id <= $1 and task_id = $2`,
 		id, tid)
 
 	if err != nil {
@@ -61,10 +61,14 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 
 	response.Parental = make([]domain.Work, 0)
 
-	var work domain.Work
-
 	for result.Next() {
-		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource)
+		var work domain.Work
+		previous := make([]uint32, 0)
+		err = result.Scan(&work.Id, &work.TaskId, &work.Duration, &work.Resource, &previous)
+
+		for n := range previous {
+			work.PreviousIds[n] = domain.Id(previous[n])
+		}
 
 		if err != nil {
 			return response, err
@@ -78,4 +82,16 @@ func (r *work) List(ctx context.Context, id domain.Id) (domain.WorkResponse, err
 	}
 
 	return response, err
+}
+
+func (r *work) CreateOrUpdateIfNotExists(ctx context.Context, work domain.Work) {
+	intPreviousIds := make([]uint32, 0)
+
+	for _, element := range work.PreviousIds {
+		intPreviousIds = append(intPreviousIds, uint32(element))
+	}
+
+	r.db.conn.QueryRow(ctx,
+		`INSERT INTO work (id, task_id, duration, resource, previous_ids) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO UPDATE SET task_id = $2, duration = $3, resource = $4, previous_ids = $5`,
+		work.Id, work.TaskId, work.Duration, work.Resource, intPreviousIds).Scan()
 }
